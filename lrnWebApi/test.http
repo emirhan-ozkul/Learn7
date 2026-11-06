@@ -1,0 +1,8 @@
+POST http://localhost:XXXX/sayfa-ismi
+Content-Type: application/json
+
+{
+  "id": 1,
+  "ad": "Yeni Ürün",
+  "fiyat": 150
+}

@@ -1,0 +1,6 @@
+@lrnWebApi_HostAddress = http://localhost:5000
+
+GET {{lrnWebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,242 @@
+import { useState, type FormEvent } from "react";
+import "./App.css";
+
+type Sentence = {
+  english: string;
+  turkish: string;
+  grammar: string;
+  level: string;
+  topic: string;
+};
+
+type ApiSentence = {
+  English?: string;
+  english?: string;
+  Turkish?: string;
+  turkish?: string;
+  Grammar?: string;
+  grammar?: string;
+  Level?: string;
+  level?: string;
+  Topic?: string;
+  topic?: string;
+};
+
+const sampleSentences: Sentence[] = [
+  {
+    english: "I usually have breakfast at seven.",
+    turkish: "Genellikle saat yedide kahvaltı yaparım.",
+    grammar: "Simple Present · Routines",
+    level: "A1",
+    topic: "Daily routine",
+  },
+  {
+    english: "She is reading a book in the garden.",
+    turkish: "Bahçede kitap okuyor.",
+    grammar: "Present Continuous",
+    level: "A2",
+    topic: "Free time",
+  },
+  {
+    english: "We visited the museum last weekend.",
+    turkish: "Geçen hafta sonu müzeyi ziyaret ettik.",
+    grammar: "Simple Past · Regular verbs",
+    level: "A2",
+    topic: "Travel",
+  },
+];
+
+const lessons = [
+  { icon: "👋", title: "Tanışma", detail: "Selamlaşma ve kendini tanıtma", state: "done" },
+  { icon: "☕", title: "Günlük rutinler", detail: "Simple present · 8 dakika", state: "active" },
+  { icon: "🧭", title: "Şehirde yön bulma", detail: "Yerler ve yön tarifleri", state: "locked" },
+];
+
+function App() {
+  const [sentences, setSentences] = useState(sampleSentences);
+  const [topic, setTopic] = useState("Daily routine");
+  const [level, setLevel] = useState("A1");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const generateSentence = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+      const response = await fetch(`${apiBaseUrl}/api/Translation/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ Topic: topic, Level: level }),
+      });
+
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`İstek başarısız (${response.status})${detail ? `: ${detail}` : "."}`);
+      }
+
+      const data = (await response.json()) as ApiSentence | null;
+      if (!data) throw new Error("Sunucu bu istek için henüz bir cümle döndürmedi.");
+
+      const sentence: Sentence = {
+        english: data.English ?? data.english ?? "",
+        turkish: data.Turkish ?? data.turkish ?? "",
+        grammar: data.Grammar ?? data.grammar ?? "Dil bilgisi bilgisi yok",
+        level: data.Level ?? data.level ?? level,
+        topic: data.Topic ?? data.topic ?? topic,
+      };
+      if (!sentence.english && !sentence.turkish) {
+        throw new Error("Sunucudan okunabilir bir cümle alınamadı.");
+      }
+
+      setSentences((current) => [sentence, ...current]);
+      setNotice("Yeni cümle öğrenme listene eklendi.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Beklenmeyen bir hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <a className="brand" href="#home" aria-label="Lingo ana sayfa">
+          <span className="brand-mark">l</span>
+          <span>lingo<span className="brand-dot">.</span></span>
+        </a>
+
+        <div className="sidebar-label">ÖĞRENME ALANI</div>
+        <nav className="side-nav" aria-label="Ana menü">
+          <a className="nav-link active" href="#home"><span>⌂</span> Ana sayfa</a>
+          <a className="nav-link" href="#journey"><span>✦</span> Öğrenme rotası</a>
+          <a className="nav-link" href="#sentences"><span>▤</span> Cümlelerim</a>
+          <a className="nav-link" href="#progress"><span>▥</span> İlerlemem</a>
+        </nav>
+
+        <div className="sidebar-spacer" />
+        <div className="sidebar-promo">
+          <div className="promo-owl">🦉</div>
+          <strong>Her gün biraz daha!</strong>
+          <p>Günde 10 dakika ayır, İngilizceni adım adım geliştir.</p>
+          <div className="promo-progress"><span /></div>
+          <small>Günlük hedefin · 6 / 10 dk</small>
+        </div>
+        <button className="profile-button" type="button" aria-label="Profil">
+          <span className="avatar">A</span>
+          <span className="profile-copy"><strong>Alex Morgan</strong><small>A1 öğrenicisi</small></span>
+          <span className="profile-more">•••</span>
+        </button>
+      </aside>
+
+      <main id="home" className="main-area">
+        <header className="topbar">
+          <div className="breadcrumb"><span>Öğrenme alanı</span><b>/</b><strong>Genel bakış</strong></div>
+          <div className="topbar-actions">
+            <div className="language-pill"><span>🇬🇧</span> İngilizce <span className="chevron">⌄</span></div>
+            <div className="streak-pill"><span>🔥</span><strong>7</strong><small>günlük seri</small></div>
+            <button className="icon-button" type="button" aria-label="Bildirimler">♧<i /></button>
+          </div>
+        </header>
+
+        <div className="page-content">
+          <section className="welcome-row">
+            <div>
+              <div className="eyebrow"><span className="sparkle">✦</span> 12 HAZİRAN PERŞEMBE</div>
+              <h1>Günaydın, Alex! <span>👋</span></h1>
+              <p>Bugün de küçük bir adım, büyük bir ilerleme. Hazır mısın?</p>
+            </div>
+            <div className="weekly-score"><span className="score-icon">✧</span><div><strong>240 XP</strong><small>Bu hafta kazandın</small></div><span className="score-arrow">↗</span></div>
+          </section>
+
+          <section className="dashboard-grid">
+            <div className="main-column">
+              <section className="course-card" id="journey">
+                <div className="course-heading">
+                  <div className="course-icon">🌱</div>
+                  <div className="course-title"><span>İNGİLİZCE · BAŞLANGIÇ</span><h2>Temelleri keşfet</h2><p>Ünite 2 <span>·</span> Günlük hayat</p></div>
+                  <button className="more-button" type="button" aria-label="Ünite seçenekleri">•••</button>
+                </div>
+                <div className="course-progress-row"><span>Ünite ilerlemesi</span><strong>2 / 6 ders</strong></div>
+                <div className="course-progress"><span /></div>
+                <div className="lesson-list">
+                  {lessons.map((lesson, index) => (
+                    <div className={`lesson-row ${lesson.state}`} key={lesson.title}>
+                      <div className="lesson-node">{lesson.state === "done" ? "✓" : lesson.icon}</div>
+                      <div className="lesson-info"><strong>{lesson.title}</strong><small>{lesson.detail}</small></div>
+                      <span className="lesson-status">{lesson.state === "done" ? "TAMAMLANDI" : lesson.state === "active" ? "ŞİMDİ ÖĞREN" : "KİLİTLİ"}</span>
+                      {index < lessons.length - 1 && <span className="lesson-connector" />}
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="sentences-section" id="sentences">
+                <div className="section-heading">
+                  <div><div className="eyebrow">ÖĞRENME NOTLARIN</div><h2>Cümle koleksiyonu <span className="count-badge">{sentences.length}</span></h2></div>
+                  <a className="text-link" href="#sentences">Tümünü gör <span>→</span></a>
+                </div>
+
+                <form className="generate-panel" onSubmit={generateSentence}>
+                  <div className="generate-copy"><span className="generate-icon">✦</span><div><strong>Yeni bir örnek cümle</strong><small>Konuna ve seviyene göre yeni bir kayıt getir.</small></div></div>
+                  <div className="generate-controls">
+                    <label className="sr-only" htmlFor="topic">Konu</label>
+                    <input id="topic" value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="Konu (örn. travel)" required />
+                    <label className="sr-only" htmlFor="level">Seviye</label>
+                    <select id="level" value={level} onChange={(event) => setLevel(event.target.value)}>
+                      <option>A1</option><option>A2</option><option>B1</option><option>B2</option>
+                    </select>
+                    <button type="submit" disabled={loading}>{loading ? <><span className="spinner" /> Yükleniyor</> : "API'den getir"}</button>
+                  </div>
+                  {error && <p className="request-message error-message" role="alert">{error}</p>}
+                  {notice && <p className="request-message success-message" role="status">{notice}</p>}
+                </form>
+
+                <div className="sentence-list">
+                  {sentences.map((sentence, index) => (
+                    <article className="sentence-card" key={`${sentence.english}-${index}`}>
+                      <div className={`sentence-index tone-${index % 3}`}>{String(index + 1).padStart(2, "0")}</div>
+                      <div className="sentence-body"><div className="sentence-tags"><span className="level-tag">{sentence.level}</span><span>{sentence.topic}</span></div><h3>{sentence.english || "İngilizce cümle"}</h3><p>{sentence.turkish || "Türkçe karşılığı bulunmuyor."}</p><div className="grammar-line"><span>✧</span> {sentence.grammar}</div></div>
+                      <button className="audio-button" type="button" aria-label="Telaffuz verisi">◖))</button>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <aside className="right-column">
+              <section className="goal-card" id="progress">
+                <div className="card-title-row"><div><div className="eyebrow">BUGÜNÜN HEDEFİ</div><h2>Harika gidiyorsun!</h2></div><span className="target-icon">🎯</span></div>
+                <div className="goal-number"><strong>6</strong><span>/ 10 dk</span></div>
+                <div className="goal-progress"><span /></div>
+                <div className="goal-footer"><span>Bir ders daha, hedef tamam! 💪</span><strong>%60</strong></div>
+              </section>
+
+              <section className="week-card">
+                <div className="card-title-row"><div><div className="eyebrow">ALIŞKANLIK TAKİBİ</div><h2>Bu haftaki ritmin</h2></div><span className="week-menu">•••</span></div>
+                <div className="week-chart" aria-label="Haftalık öğrenme aktivitesi">
+                  {[35, 68, 50, 88, 57, 74, 28].map((height, index) => <div className="chart-day" key={index}><div className="chart-track"><span className={index === 3 ? "today" : index < 4 ? "filled" : "future"} style={{ height: `${height}%` }} /></div><small>{["P", "S", "Ç", "P", "C", "C", "P"][index]}</small></div>)}
+                </div>
+                <div className="week-summary"><span><i /> Öğrenme süresi</span><strong>42 dk <small>bu hafta</small></strong></div>
+              </section>
+
+              <section className="word-card">
+                <div className="word-card-top"><span>✧ KELİME KÖŞESİ</span><span className="word-illustration">🌼</span></div>
+                <h2>curious</h2><p className="pronunciation">/ˈkjʊəriəs/ <span>·</span> sıfat</p><p className="word-translation">meraklı, öğrenmeye istekli</p><div className="word-example">“Stay curious and keep learning.”</div>
+              </section>
+
+              <div className="data-note"><span>ⓘ</span><p>Ekrandaki cümleler örnek içeriktir. API'den getirilen yanıtlar koleksiyonun başında görünür.</p></div>
+            </aside>
+          </section>
+          <footer className="page-footer"><span>İstikrarlı ilerleme, mükemmellikten daha değerlidir.</span><span>Öğrenmeye devam et <b>✦</b></span></footer>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;

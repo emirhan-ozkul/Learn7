@@ -1,0 +1,26 @@
+dotnet run --urls "http://0.0.0.0:5222"
+
+public class SentenceGenerationResponse
+{
+    public List<GeneratedSentence> Sentences { get; set; } = new();
+}
+
+"Generate one short A1-level English sentence in the past tense about daily life. Do NOT focus on morning routines. Pick a random activity from: afternoon, evening, hobbies, shopping, housework, or work. Do NOT include any GRAMMAR EXPLANATİONS. Keep the sentence short."
+
+
+int userCount = Convert.ToInt32(commandCheck.ExecuteScalar());
+                        Console.WriteLine("count 1 : " + userCount);
+                        if(userCount == 0 || userCount <= 1)
+                        {
+                            using(var createUserTableCommand = new SqliteCommand(CreatesUserTable, conn, transaction))
+                            {
+                                createUserTableCommand.ExecuteNonQuery();
+                                using(var ınsertUserTableCommand = new SqliteCommand(InsterCUTable, conn, transaction))
+                                {
+                                    ınsertUserTableCommand.ExecuteNonQuery();
+                                }
+                            }
+                        } 
+
+                        77
+                        I need to wash the car now.
